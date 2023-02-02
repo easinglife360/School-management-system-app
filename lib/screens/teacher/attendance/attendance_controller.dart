@@ -25,7 +25,7 @@ class AttendanceValue {
         student: json["student"].toString(),
         attendanceClass: json["class"].toString(),
         section: json["section"].toString(),
-        attendanceType: json["attendance_type"].toString(),
+        attendanceType: json["attendance_type"],
         note: json["note"].toString(),
       );
 

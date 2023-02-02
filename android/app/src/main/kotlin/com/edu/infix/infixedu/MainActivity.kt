@@ -1,4 +1,4 @@
-package com.marvelous.kids
+package com.edu.infix.infixedu
 
 import io.flutter.embedding.android.FlutterActivity
 

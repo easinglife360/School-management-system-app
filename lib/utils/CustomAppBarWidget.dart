@@ -826,7 +826,7 @@ class _CustomAppBarWidgetState extends State<CustomAppBarWidget> {
                     child: Padding(
                       padding: const EdgeInsets.only(left: 0.0),
                       child: Text(
-                        widget.title,
+                        widget.title.tr,
                         style: Theme.of(context).textTheme.subtitle1.copyWith(
                               fontSize: 18.sp,
                               color: Colors.white,

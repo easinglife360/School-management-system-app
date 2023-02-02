@@ -499,9 +499,11 @@ class _StudentLessonsViewState extends State<StudentLessonsView> {
       subTopicNames.add(element.subTopicTitle);
     });
 
-    plan.plan.lectureYouubeLink.split(',').forEach((element) {
-      ytLinks.add(element);
-    });
+    if (plan.plan.lectureYouubeLink != null) {
+      plan.plan.lectureYouubeLink.split(',').forEach((element) {
+        ytLinks.add(element);
+      });
+    }
     showDialog<void>(
       barrierDismissible: true,
       context: context,

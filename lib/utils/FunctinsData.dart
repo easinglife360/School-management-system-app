@@ -75,7 +75,6 @@ import 'package:infixedu/screens/teacher/homework/AddHomeworkScreen.dart';
 import 'package:infixedu/screens/teacher/homework/HomeworkScreen.dart';
 import 'package:infixedu/screens/teacher/homework/TeacherHomeworkListScreen.dart';
 import 'package:infixedu/screens/teacher/leave/ApplyLeaveScreen.dart';
-import 'package:infixedu/screens/teacher/leave/LeaveListScreen.dart';
 import 'package:infixedu/screens/teacher/leave/LeaveScreen.dart';
 import 'package:infixedu/screens/teacher/students/StudentSearch.dart';
 import 'package:infixedu/screens/wallet/student/views/StudentWalletTransactions.dart';
@@ -128,7 +127,7 @@ class AppFunction {
     'Academic',
     'Attendance',
     'Leave',
-    'Contents',
+    'Content',
     'Notice',
     'Library',
     'Homework',
@@ -156,7 +155,7 @@ class AppFunction {
     'Dormitory',
     'Attendance',
     'Fees',
-    'Contents',
+    'Content',
     'Notice',
     'Library',
     'Transport',
@@ -586,7 +585,7 @@ class AppFunction {
       case 'Staff':
         Navigator.push(context, ScaleRoute(page: AdminStaffList()));
         break;
-      case 'Contents':
+      case 'Content':
         Navigator.push(context,
             ScaleRoute(page: ContentHomeScreen(contents, contentsIcons)));
         break;
@@ -635,7 +634,7 @@ class AppFunction {
             ScaleRoute(
                 page: AttendanceHomeScreen(attendance, attendanceIcons)));
         break;
-      case 'Contents':
+      case 'Content':
         Navigator.push(context,
             ScaleRoute(page: ContentHomeScreen(contents, contentsIcons)));
         break;
@@ -785,7 +784,7 @@ class AppFunction {
         Navigator.push(context,
             ScaleRoute(page: HomeworkHomeScreen(homework, homeworkIcons)));
         break;
-      case 'Contents':
+      case 'Content':
         Navigator.push(context,
             ScaleRoute(page: ContentHomeScreen(contents, contentsIcons)));
         break;
@@ -931,7 +930,7 @@ class AppFunction {
   static void getLeaveDashboardPage(BuildContext context, String title) {
     switch (title) {
       case 'Leave List':
-        Navigator.push(context, ScaleRoute(page: LeaveListScreen()));
+        Navigator.push(context, ScaleRoute(page: LeaveListStudent()));
         break;
       case 'Apply Leave':
         Navigator.push(context, ScaleRoute(page: ApplyLeaveScreen()));

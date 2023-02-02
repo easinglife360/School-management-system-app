@@ -41,19 +41,19 @@ class Record {
         this.schoolId,
     });
 
-    int id;
-    int studentId;
+    dynamic id;
+    dynamic studentId;
     String fullName;
     String className;
     String sectionName;
-    int classId;
-    int sectionId;
-    int isDefault;
-    int isPromote;
+    dynamic classId;
+    dynamic sectionId;
+    dynamic isDefault;
+    dynamic isPromote;
     String rollNo;
-    int sessionId;
-    int academicId;
-    int schoolId;
+    dynamic sessionId;
+    dynamic academicId;
+    dynamic schoolId;
 
     factory Record.fromJson(Map<String, dynamic> json) => Record(
         id: json["id"],

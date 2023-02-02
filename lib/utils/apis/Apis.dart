@@ -397,8 +397,8 @@ class InfixApi {
     return baseApi + "approve-leave/$id";
   }
 
-  static String pendingLeaves(id) {
-    return baseApi + "pending-leave/$id";
+  static String pendingLeaves(id,purpose) {
+    return baseApi + "pending-leave/$id?purpose=$purpose";
   }
 
   static String rejectedLeaves(id) {
@@ -673,7 +673,7 @@ class InfixApi {
 
   //Lesson Plan
   static String studentLessonPlan = baseApi + "student-lesson-plan";
-  
+
   static String studentLessonPlanByDate = baseApi + "student-lesson-plan-by-date";
 
   static String studentLessonPreviousWeek = baseApi + "student-lesson-plan-previous-week";

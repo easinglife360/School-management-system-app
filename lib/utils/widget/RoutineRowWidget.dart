@@ -16,29 +16,29 @@ class RoutineRowDesign extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 5.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
-              flex: 2,
-              child: Text(time ?? "",
-                  style: Theme.of(context).textTheme.headline4),
-            ),
-            Expanded(
-              flex: 1,
-              child: Text(subject ?? "",
-                  style: Theme.of(context).textTheme.headline4),
-            ),
-            Expanded(
-              flex: 1,
-              child: Text(room ?? "",
-                  style: Theme.of(context).textTheme.headline4),
-            ),
-          ],
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child:
+                Text(time ?? "", style: Theme.of(context).textTheme.headline4),
+          ),
+          SizedBox(
+            width: 5,
+          ),
+          Expanded(
+            child: Text(subject ?? "",
+                style: Theme.of(context).textTheme.headline4),
+          ),
+          SizedBox(
+            width: 5,
+          ),
+          Expanded(
+            child: Text(room ?? "N/A",
+                style: Theme.of(context).textTheme.headline4),
+          ),
+        ],
       ),
     );
   }

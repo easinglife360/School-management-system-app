@@ -12,6 +12,7 @@ import 'package:infixedu/controller/user_controller.dart';
 
 // Project imports:
 import 'package:infixedu/utils/CustomAppBarWidget.dart';
+import 'package:infixedu/utils/StudentRecordWidget.dart';
 import 'package:infixedu/utils/Utils.dart';
 import 'package:infixedu/utils/apis/Apis.dart';
 import 'package:infixedu/utils/model/ClassExam.dart';
@@ -190,73 +191,19 @@ class _ClassExamResultScreenState extends State<ClassExamResultScreen> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 50,
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: BouncingScrollPhysics(),
-              scrollDirection: Axis.horizontal,
-              separatorBuilder: (context, index) => SizedBox(
-                width: 10,
-              ),
-              itemBuilder: (context, recordIndex) {
-                Record record =
-                    _userController.studentRecord.value.records[recordIndex];
-                return GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: () async {
-                    _userController.selectedRecord.value = record;
-                    setState(
-                      () {
-                        results = getAllClassExamResult(
-                          id,
-                          examId,
-                          record.id,
-                        );
-                      },
-                    );
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(10),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(2),
-                      border: Border.all(
-                        color: _userController.selectedRecord.value == record
-                            ? Colors.transparent
-                            : Colors.grey,
-                      ),
-                      gradient: _userController.selectedRecord.value == record
-                          ? LinearGradient(
-                              colors: [
-                                Color(0xff7C32FF),
-                                Color(0xffC738D8),
-                              ],
-                            )
-                          : LinearGradient(
-                              colors: [
-                                Colors.transparent,
-                                Colors.transparent,
-                              ],
-                            ),
-                    ),
-                    child: Text(
-                      "${record.className} (${record.sectionName})",
-                      style: Get.textTheme.subtitle1.copyWith(
-                        fontSize: 14,
-                        color: _userController.selectedRecord.value == record
-                            ? Colors.white
-                            : Colors.grey,
-                      ),
-                    ),
-                  ),
-                );
-              },
-              itemCount: _userController.studentRecord.value.records.length,
-            ),
-          ),
-          SizedBox(
-            height: 10,
+          StudentRecordWidget(
+            onTap: (Record record) {
+              _userController.selectedRecord.value = record;
+              setState(
+                () {
+                  results = getAllClassExamResult(
+                    id,
+                    examId,
+                    record.id,
+                  );
+                },
+              );
+            },
           ),
           Expanded(
             child: FutureBuilder<ClassExamResultList>(

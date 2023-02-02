@@ -7,12 +7,16 @@ import 'package:get/get.dart';
 
 // Project imports:
 import 'package:infixedu/config/app_config.dart';
+import 'package:infixedu/controller/user_controller.dart';
+import 'package:infixedu/utils/StudentRecordWidget.dart';
 import 'package:infixedu/utils/Utils.dart';
 import 'package:infixedu/screens/fees/model/Fee.dart';
 import 'package:infixedu/screens/fees/services/FeesService.dart';
+import 'package:infixedu/utils/model/StudentRecord.dart';
 import 'package:infixedu/utils/server/LogoutService.dart';
 import 'package:infixedu/screens/fees/widgets/Fees_row_layout.dart';
 import 'package:infixedu/utils/widget/ShimmerListWidget.dart';
+
 class StudentFeesOld extends StatefulWidget {
   final String id;
 
@@ -22,6 +26,7 @@ class StudentFeesOld extends StatefulWidget {
 }
 
 class _StudentFeesOldState extends State<StudentFeesOld> {
+  final UserController _userController = Get.put(UserController());
   String _token;
 
   @override
@@ -95,6 +100,11 @@ class _StudentFeesOldState extends State<StudentFeesOld> {
         children: <Widget>[
           SizedBox(
             height: 10,
+          ),
+          StudentRecordWidget(
+            onTap: (Record record) async {
+              _userController.selectedRecord.value = record;
+            },
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15),

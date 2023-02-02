@@ -11,10 +11,12 @@ import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_paystack/flutter_paystack.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart' as GETx;
 import 'package:http/http.dart' as http;
 
 // Project imports:
 import 'package:infixedu/config/app_config.dart';
+import 'package:infixedu/controller/user_controller.dart';
 import 'package:infixedu/screens/fees/paymentGateway/RazorPay/razorpay_service.dart';
 import 'package:infixedu/screens/fees/paymentGateway/paypal/paypal_payment.dart';
 import 'package:infixedu/utils/CustomAppBarWidget.dart';
@@ -406,6 +408,7 @@ class BankOrCheque extends StatefulWidget {
 }
 
 class _BankOrChequeState extends State<BankOrCheque> {
+  final UserController _userController = GETx.Get.put(UserController());
   TextEditingController amountController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   File _file;
@@ -524,8 +527,8 @@ class _BankOrChequeState extends State<BankOrCheque> {
         if (widget.paymentType == "Bank Payment") {
           paymentUrl = InfixApi.childFeeBankPayment(
               amountController.text,
-              user.classId,
-              user.sectionId,
+              _userController.selectedRecord.value.classId,
+              _userController.selectedRecord.value.sectionId,
               widget.id,
               int.parse(widget.fee.feesTypeId.toString()),
               'bank',
@@ -534,8 +537,8 @@ class _BankOrChequeState extends State<BankOrCheque> {
         } else {
           paymentUrl = InfixApi.childFeeChequePayment(
             amountController.text,
-            user.classId,
-            user.sectionId,
+            _userController.selectedRecord.value.classId,
+            _userController.selectedRecord.value.sectionId,
             widget.id,
             int.parse(widget.fee.feesTypeId.toString()),
             'cheque',
@@ -551,8 +554,8 @@ class _BankOrChequeState extends State<BankOrCheque> {
         if (widget.paymentType == "Bank Payment") {
           formData = FormData.fromMap({
             "amount": amountController.text,
-            "class_id": user.classId,
-            "section_id": user.sectionId,
+            "class_id": _userController.selectedRecord.value.classId,
+            "section_id": _userController.selectedRecord.value.sectionId,
             "student_id": widget.id,
             "fees_type_id": widget.fee.feesTypeId,
             "payment_mode": 'bank',
@@ -563,8 +566,8 @@ class _BankOrChequeState extends State<BankOrCheque> {
         } else {
           formData = FormData.fromMap({
             "amount": amountController.text,
-            "class_id": user.classId,
-            "section_id": user.sectionId,
+            "class_id": _userController.selectedRecord.value.classId,
+            "section_id": _userController.selectedRecord.value.sectionId,
             "student_id": widget.id,
             "fees_type_id": widget.fee.feesTypeId,
             "payment_mode": 'cheque',
@@ -628,259 +631,250 @@ class _BankOrChequeState extends State<BankOrCheque> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: CustomAppBarWidget(
-          title: widget.paymentType,
-        ),
-        backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          child: FutureBuilder<UserDetails>(
-              future: fetchUserDetails(widget.id),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  final user = snapshot.data;
-                  return Container(
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.all(2.0),
-                            child: FeePaymentRow(widget.fee),
-                          ),
-                          // Utils.checkTextValue("CLASS",user.classId),
-                          widget.paymentType == "Bank Payment"
-                              ? FutureBuilder<BankList>(
-                                  future: bank,
-                                  builder: (context, snapshot) {
-                                    print(snapshot.data);
-                                    if (snapshot.hasData) {
-                                      return Container(
-                                        width:
-                                            MediaQuery.of(context).size.width,
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 10.0),
-                                        child: Column(
-                                          children: [
-                                            DropdownButton(
-                                              elevation: 0,
-                                              isExpanded: true,
-                                              items: snapshot.data.banks
-                                                  .map((item) {
-                                                return DropdownMenuItem<String>(
-                                                  value: item.bankName,
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 8.0),
-                                                    child: Text(item.bankName),
-                                                  ),
-                                                );
-                                              }).toList(),
+    return Scaffold(
+      appBar: CustomAppBarWidget(
+        title: widget.paymentType,
+      ),
+      backgroundColor: Colors.white,
+      body: SingleChildScrollView(
+        child: FutureBuilder<UserDetails>(
+            future: fetchUserDetails(widget.id),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                final user = snapshot.data;
+                return Container(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(2.0),
+                          child: FeePaymentRow(widget.fee),
+                        ),
+                        // Utils.checkTextValue("CLASS",user.classId),
+                        widget.paymentType == "Bank Payment"
+                            ? FutureBuilder<BankList>(
+                                future: bank,
+                                builder: (context, snapshot) {
+                                  print(snapshot.data);
+                                  if (snapshot.hasData) {
+                                    return Container(
+                                      width: MediaQuery.of(context).size.width,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 10.0),
+                                      child: Column(
+                                        children: [
+                                          DropdownButton(
+                                            elevation: 0,
+                                            isExpanded: true,
+                                            items:
+                                                snapshot.data.banks.map((item) {
+                                              return DropdownMenuItem<String>(
+                                                value: item.bankName,
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 8.0),
+                                                  child: Text(item.bankName),
+                                                ),
+                                              );
+                                            }).toList(),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headline4
+                                                .copyWith(fontSize: 15.0),
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _selectedBank = value;
+                                                bankId = getCode(
+                                                    snapshot.data.banks, value);
+                                                bankAccountName =
+                                                    getBankAccountName(
+                                                        snapshot.data.banks,
+                                                        value);
+                                                bankAccountNumber =
+                                                    getBankAccountNumber(
+                                                        snapshot.data.banks,
+                                                        value);
+                                                debugPrint(
+                                                    'User select $bankId');
+                                              });
+                                            },
+                                            value: _selectedBank,
+                                          ),
+                                          ListTile(
+                                            contentPadding:
+                                                EdgeInsets.only(left: 8),
+                                            title: Text(
+                                              bankAccountName,
                                               style: Theme.of(context)
                                                   .textTheme
-                                                  .headline4
-                                                  .copyWith(fontSize: 15.0),
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  _selectedBank = value;
-                                                  bankId = getCode(
-                                                      snapshot.data.banks,
-                                                      value);
-                                                  bankAccountName =
-                                                      getBankAccountName(
-                                                          snapshot.data.banks,
-                                                          value);
-                                                  bankAccountNumber =
-                                                      getBankAccountNumber(
-                                                          snapshot.data.banks,
-                                                          value);
-                                                  debugPrint(
-                                                      'User select $bankId');
-                                                });
-                                              },
-                                              value: _selectedBank,
+                                                  .headline5
+                                                  .copyWith(fontSize: 14),
                                             ),
-                                            ListTile(
-                                              contentPadding:
-                                                  EdgeInsets.only(left: 8),
-                                              title: Text(
-                                                bankAccountName,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .headline5
-                                                    .copyWith(fontSize: 14),
-                                              ),
-                                              subtitle: Text(
-                                                bankAccountNumber,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .headline5
-                                                    .copyWith(
-                                                        fontSize: 12,
-                                                        fontWeight:
-                                                            FontWeight.normal),
-                                              ),
+                                            subtitle: Text(
+                                              bankAccountNumber,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .headline5
+                                                  .copyWith(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.normal),
                                             ),
-                                          ],
-                                        ),
-                                      );
-                                    } else {
-                                      return Container();
-                                    }
-                                  })
-                              : Container(),
-                          Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: TextFormField(
-                              keyboardType: TextInputType.numberWithOptions(
-                                  decimal: false, signed: false),
-                              style: Theme.of(context).textTheme.headline6,
-                              controller: amountController,
-                              enabled: false,
-                              autovalidateMode:
-                                  AutovalidateMode.onUserInteraction,
-                              validator: (String value) {
-                                RegExp regExp = new RegExp(r'^[0-9]*$');
-                                if (value.isEmpty) {
-                                  return 'Please enter a valid amount';
-                                }
-                                if (int.tryParse(value) == 0) {
-                                  return 'Amount must be greater than 0';
-                                }
-                                if (!regExp.hasMatch(value)) {
-                                  return 'Please enter a number';
-                                }
-                                if (int.tryParse(value) >
-                                    int.tryParse(
-                                        widget.fee.balance.toString())) {
-                                  return 'Amount must not greater than balance';
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                hintText: "Amount",
-                                labelText: "Amount",
-                                labelStyle:
-                                    Theme.of(context).textTheme.headline4,
-                                errorStyle: TextStyle(
-                                    color: Colors.pinkAccent, fontSize: 15.0),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5.0),
-                                ),
-                              ),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () {
-                              pickDocument();
-                            },
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10.0),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                      color: Colors.black.withOpacity(0.3)),
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(5.0)),
-                                ),
-                                padding: EdgeInsets.symmetric(vertical: 20.0),
-                                child: Row(
-                                  children: <Widget>[
-                                    Expanded(
-                                      child: Padding(
-                                        padding:
-                                            const EdgeInsets.only(left: 8.0),
-                                        child: Text(
-                                          _file == null
-                                              ? widget.paymentType ==
-                                                      "Bank Payment"
-                                                  ? 'Select Bank payment slip'
-                                                  : 'Select Cheque payment slip'
-                                              : _file.path.split('/').last,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headline4
-                                              .copyWith(),
-                                          maxLines: 2,
-                                        ),
-                                      ),
-                                    ),
-                                    Text(
-                                      'Browse',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headline4
-                                          .copyWith(
-                                            decoration:
-                                                TextDecoration.underline,
                                           ),
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                  ],
-                                ),
+                                        ],
+                                      ),
+                                    );
+                                  } else {
+                                    return Container();
+                                  }
+                                })
+                            : Container(),
+                        Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: TextFormField(
+                            keyboardType: TextInputType.numberWithOptions(
+                                decimal: false, signed: false),
+                            style: Theme.of(context).textTheme.headline6,
+                            controller: amountController,
+                            enabled: false,
+                            autovalidateMode:
+                                AutovalidateMode.onUserInteraction,
+                            validator: (String value) {
+                              RegExp regExp = new RegExp(r'^[0-9]*$');
+                              if (value.isEmpty) {
+                                return 'Please enter a valid amount';
+                              }
+                              if (int.tryParse(value) == 0) {
+                                return 'Amount must be greater than 0';
+                              }
+                              if (!regExp.hasMatch(value)) {
+                                return 'Please enter a number';
+                              }
+                              if (int.tryParse(value) >
+                                  int.tryParse(widget.fee.balance.toString())) {
+                                return 'Amount must not greater than balance';
+                              }
+                              return null;
+                            },
+                            decoration: InputDecoration(
+                              hintText: "Amount",
+                              labelText: "Amount",
+                              labelStyle: Theme.of(context).textTheme.headline4,
+                              errorStyle: TextStyle(
+                                  color: Colors.pinkAccent, fontSize: 15.0),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(5.0),
                               ),
                             ),
                           ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          bankAvailable
-                              ? Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10.0, vertical: 10),
-                                  child: GestureDetector(
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      width: MediaQuery.of(context).size.width,
-                                      height: 50.0,
-                                      decoration: Utils.gradientBtnDecoration,
+                        ),
+                        InkWell(
+                          onTap: () {
+                            pickDocument();
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.black.withOpacity(0.3)),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(5.0)),
+                              ),
+                              padding: EdgeInsets.symmetric(vertical: 20.0),
+                              child: Row(
+                                children: <Widget>[
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
                                       child: Text(
-                                        "PAY",
+                                        _file == null
+                                            ? widget.paymentType ==
+                                                    "Bank Payment"
+                                                ? 'Select Bank payment slip'
+                                                : 'Select Cheque payment slip'
+                                            : _file.path.split('/').last,
                                         style: Theme.of(context)
                                             .textTheme
-                                            .headline5
-                                            .copyWith(color: Colors.white),
+                                            .headline4
+                                            .copyWith(),
+                                        maxLines: 2,
                                       ),
                                     ),
-                                    onTap: () {
-                                      submitPayment(context, user);
-                                    },
                                   ),
-                                )
-                              : Container(
-                                  child: Text(
-                                    "No Bank Available for payment. Please use a different payment method.",
-                                    textAlign: TextAlign.center,
-                                    style:
-                                        Theme.of(context).textTheme.headline5,
+                                  Text(
+                                    'Browse',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headline4
+                                        .copyWith(
+                                          decoration: TextDecoration.underline,
+                                        ),
                                   ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        bankAvailable
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10.0, vertical: 10),
+                                child: GestureDetector(
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    width: MediaQuery.of(context).size.width,
+                                    height: 50.0,
+                                    decoration: Utils.gradientBtnDecoration,
+                                    child: Text(
+                                      "PAY",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline5
+                                          .copyWith(color: Colors.white),
+                                    ),
+                                  ),
+                                  onTap: () {
+                                    submitPayment(context, user);
+                                  },
                                 ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: isResponse == true
-                                ? LinearProgressIndicator(
-                                    backgroundColor: Colors.transparent,
-                                  )
-                                : Text(''),
-                          ),
-                        ],
-                      ),
+                              )
+                            : Container(
+                                child: Text(
+                                  "No Bank Available for payment. Please use a different payment method.",
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.headline5,
+                                ),
+                              ),
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: isResponse == true
+                              ? LinearProgressIndicator(
+                                  backgroundColor: Colors.transparent,
+                                )
+                              : Text(''),
+                        ),
+                      ],
                     ),
-                  );
-                } else {
-                  return Center(
-                    child: CupertinoActivityIndicator(),
-                  );
-                }
-              }),
-        ),
+                  ),
+                );
+              } else {
+                return Center(
+                  child: CupertinoActivityIndicator(),
+                );
+              }
+            }),
       ),
     );
   }

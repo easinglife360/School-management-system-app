@@ -1,5 +1,6 @@
 // Dart imports:
 import 'dart:convert';
+import 'dart:developer';
 
 // Flutter imports:
 import 'package:flutter/cupertino.dart';
@@ -12,7 +13,6 @@ import 'package:http/http.dart' as http;
 
 // Project imports:
 import 'package:infixedu/utils/CustomAppBarWidget.dart';
-import 'package:infixedu/utils/CustomSnackBars.dart';
 import 'package:infixedu/utils/Utils.dart';
 import 'package:infixedu/utils/apis/Apis.dart';
 import 'package:infixedu/utils/model/Attendance.dart';
@@ -58,7 +58,9 @@ class _StudentListAttendanceState extends State<StudentListAttendance> {
   GlobalKey _key = GlobalKey();
   String token;
   bool attendanceDone = false;
+  String schoolId;
   bool isLoading = false;
+  bool _isHoliday = false;
 
   Future<AttendanceList> newStudents;
 
@@ -66,12 +68,36 @@ class _StudentListAttendanceState extends State<StudentListAttendance> {
       {this.classCode, this.sectionCode, this.url, this.date, this.token});
 
   @override
-  void didChangeDependencies(){
-    setState(() {
+  void didChangeDependencies() async {
+    await Utils.getStringValue('schoolId').then((schoolVal) {
+      setState(() {
+        schoolId = schoolVal;
         function.setZero();
         newStudents = getAttendance();
+        newStudents.then((value) {
+          value.attendances.forEach((element) {
+            _attendanceController.attendanceMap.addAll({
+              '${element.recordId}': AttendanceValue.fromJson({
+                'student': element.sId.toString(),
+                'class': element.classId.toString(),
+                'section': element.sectionId.toString(),
+                'attendance_type': element.attendanceType == null
+                    ? "P"
+                    : element.attendanceType,
+              })
+            });
+          });
+        });
       });
+    });
     super.didChangeDependencies();
+  }
+
+  @override
+  void dispose() {
+    _attendanceController.attendanceMap.clear();
+    _attendanceController.onClose();
+    super.dispose();
   }
 
   @override
@@ -86,30 +112,96 @@ class _StudentListAttendanceState extends State<StudentListAttendance> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          attendanceDone
-              ? Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Student attendance not done yet".tr,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headline4
-                            .copyWith(fontSize: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              attendanceDone
+                  ? Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Student attendance not done yet".tr,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headline4
+                                  .copyWith(fontSize: 14),
+                            ),
+                            Text(
+                              "Select Present/Late/Absent/Halfday".tr,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headline4
+                                  .copyWith(fontSize: 14),
+                            ),
+                          ],
+                        ),
                       ),
-                      Text(
-                        "Select Present/Late/Absent/Halfday".tr,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headline4
-                            .copyWith(fontSize: 14),
+                    )
+                  : Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          _isHoliday
+                              ? "Attendance Already Submitted As Holiday. Select Unmark holiday to Edit record."
+                                  .tr
+                              : "Attendance Already Submitted. You Can Edit Record."
+                                  .tr,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline4
+                              .copyWith(fontSize: 14),
+                        ),
                       ),
-                    ],
-                  ),
-                )
-              : Container(),
+                    ),
+              SizedBox(
+                width: 10,
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor:
+                      _isHoliday ? Colors.red : Colors.deepPurpleAccent,
+                ),
+                onPressed: () async {
+                  Map data = {
+                    'date': date,
+                    'attendance': _attendanceController.attendanceMap,
+                  };
+
+                  await newStudents.then((value) {
+                    value.attendances.forEach((element) {
+                      _attendanceController.attendanceMap.update(
+                          '${element.recordId}',
+                          (value) => AttendanceValue.fromJson({
+                                'student': element.sId.toString(),
+                                'class': element.classId.toString(),
+                                'section': element.sectionId.toString(),
+                                'attendance_type': _isHoliday ? null : "H",
+                              }));
+                    });
+                    _attendanceController.attendanceMap.forEach((key, value) {
+                      print(value.toJson().toString());
+                    });
+
+                    log(data.toString());
+                  });
+
+                  await setDefaultAttendance(data);
+                },
+                child: Text(
+                  _isHoliday ? "Unmark Holiday" : "Mark Holiday",
+                  style: Theme.of(context).textTheme.bodySmall.copyWith(
+                        color: Colors.white,
+                      ),
+                ),
+              ),
+              SizedBox(
+                width: 10,
+              ),
+            ],
+          ),
           isLoading
               ? Expanded(
                   child: Center(
@@ -122,54 +214,63 @@ class _StudentListAttendanceState extends State<StudentListAttendance> {
                     builder: (context, snapshot) {
                       if (snapshot.hasData) {
                         totalStudent = snapshot.data.attendances.length;
-                        return Column(
-                          children: [
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount: snapshot.data.attendances.length,
-                                itemBuilder: (context, index) {
-                                  return StudentAttendanceRow(
-                                    snapshot.data.attendances[index],
-                                    classCode,
-                                    sectionCode,
-                                    date,
-                                    token,
-                                  );
-                                },
-                              ),
-                            ),
-                            Container(
-                              width: MediaQuery.of(context).size.width * 0.5,
-                              margin: EdgeInsets.only(bottom: 30),
-                              padding: EdgeInsets.only(top: 5),
-                              height: 50.0,
-                              alignment: Alignment.center,
-                              child: GestureDetector(
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  decoration: Utils.gradientBtnDecoration,
-                                  child: Text(
-                                    "Save".tr,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headline4
-                                        .copyWith(
-                                            color: Colors.white,
-                                            fontSize: ScreenUtil().setSp(14)),
-                                  ),
+                        return IgnorePointer(
+                          ignoring: _isHoliday ? true : false,
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: ListView.builder(
+                                  itemCount: snapshot.data.attendances.length,
+                                  addAutomaticKeepAlives: true,
+                                  itemBuilder: (context, index) {
+                                    return StudentAttendanceRow(
+                                      snapshot.data.attendances[index],
+                                      classCode,
+                                      sectionCode,
+                                      date,
+                                      token,
+                                    );
+                                  },
                                 ),
-                                onTap: () async {
-                                  Map data = {
-                                    'date': date,
-                                    'attendance':
-                                        _attendanceController.attendanceMap,
-                                  };
-
-                                  await setDefaultAttendance(data);
-                                },
                               ),
-                            )
-                          ],
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.5,
+                                margin: EdgeInsets.only(bottom: 30),
+                                padding: EdgeInsets.only(top: 5),
+                                height: 50.0,
+                                alignment: Alignment.center,
+                                child: GestureDetector(
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    decoration: Utils.gradientBtnDecoration,
+                                    child: Text(
+                                      "Save".tr,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline4
+                                          .copyWith(
+                                              color: Colors.white,
+                                              fontSize: ScreenUtil().setSp(14)),
+                                    ),
+                                  ),
+                                  onTap: () async {
+                                    Map data = {
+                                      'date': date,
+                                      'attendance':
+                                          _attendanceController.attendanceMap,
+                                    };
+
+                                    _attendanceController.attendanceMap
+                                        .forEach((key, value) {
+                                      print(value.toJson().toString());
+                                    });
+
+                                    await setDefaultAttendance(data);
+                                  },
+                                ),
+                              )
+                            ],
+                          ),
                         );
                       } else {
                         return ListView.builder(
@@ -191,12 +292,12 @@ class _StudentListAttendanceState extends State<StudentListAttendance> {
   }
 
   Future<AttendanceList> getAttendance() async {
-    // var response = await DefaultAssetBundle.of(context)
-    //     .loadString("assets/images/response-attend.json");
-
     final response = await http.get(
         Uri.parse(InfixApi.attendanceCheck(
-            widget.date, classCode, sectionCode,)),
+          widget.date,
+          classCode,
+          sectionCode,
+        )),
         headers: Utils.setHeader(token));
     if (response.statusCode == 200) {
       var jsonData = jsonDecode(response.body);
@@ -207,7 +308,28 @@ class _StudentListAttendanceState extends State<StudentListAttendance> {
         });
       }
 
-      return AttendanceList.fromJson(jsonData['data']);
+      final data = AttendanceList.fromJson(jsonData['data']);
+
+      if (data.attendances.first.attendanceType == "H") {
+        setState(() {
+          _isHoliday = true;
+        });
+      } else {
+        setState(() {
+          _isHoliday = false;
+        });
+      }
+      if (data.attendances.first.attendanceType == null) {
+        setState(() {
+          attendanceDone = true;
+        });
+      } else {
+        setState(() {
+          attendanceDone = false;
+        });
+      }
+
+      return data;
     } else {
       throw Exception('Failed to load');
     }
@@ -220,117 +342,6 @@ class _StudentListAttendanceState extends State<StudentListAttendance> {
     if (response.statusCode == 200) {}
   }
 
-  showAlertDialog(BuildContext context) {
-    showDialog<void>(
-      barrierDismissible: false,
-      context: _key.currentContext,
-      builder: (BuildContext context) {
-        if (function.getAbsent() == 0) {
-          // setDefaultAttendance();
-        }
-
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(0),
-              child: Container(
-                height: MediaQuery.of(context).size.height / 2,
-                width: MediaQuery.of(context).size.width,
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10.0, top: 20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 20.0),
-                        child: Card(
-                            child: CircleAvatar(
-                              radius: 30.0,
-                              backgroundColor: Colors.greenAccent.shade700,
-                              child: Icon(
-                                Icons.done,
-                                color: Colors.white,
-                              ),
-                            ),
-                            elevation: 18.0,
-                            shape: CircleBorder(),
-                            clipBehavior: Clip.antiAlias),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: Text(
-                          'Success'.tr,
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          style: Theme.of(context).textTheme.headline6.copyWith(
-                              fontWeight: FontWeight.w500, fontSize: 18.0),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: Text(
-                          'Total student' + ' : $totalStudent',
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline6
-                              .copyWith(fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10.0),
-                        child: Text(
-                          'Total Absent' + ' : ${function.getAbsent()}',
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headline6
-                              .copyWith(fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(
-                            bottom: 10.0, left: 10.0, right: 10.0, top: 15.0),
-                        child: GestureDetector(
-                          child: Container(
-                            alignment: Alignment.center,
-                            width: MediaQuery.of(context).size.width,
-                            height: 50.0,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20.0),
-                              color: Colors.purple,
-                            ),
-                            child: Text(
-                              "OK".tr,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headline4
-                                  .copyWith(
-                                      color: Colors.white, fontSize: 16.0),
-                            ),
-                          ),
-                          onTap: () {
-                            // sentNotificationToSection();
-                            Navigator.pop(_key.currentContext);
-                            Navigator.pop(context);
-                          },
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            )
-          ],
-        );
-      },
-    );
-  }
-
   Future setDefaultAttendance(Map data) async {
     setState(() {
       isLoading = true;
@@ -340,8 +351,9 @@ class _StudentListAttendanceState extends State<StudentListAttendance> {
     print(response.body);
     if (response.statusCode == 200) {
       var jsonString = jsonDecode(response.body);
+      print(jsonString);
       newStudents = getAttendance();
-      CustomSnackBar().snackBarSuccess("${jsonString['message'].toString()}");
+      // CustomSnackBar().snackBarSuccess("${jsonString['message'].toString()}");
       setState(() {
         attendanceDone = false;
         isLoading = false;

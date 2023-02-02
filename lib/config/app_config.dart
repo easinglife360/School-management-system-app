@@ -1,8 +1,8 @@
 class AppConfig {
   static String domainName =
-      'http://mkiplearning.com/'; //** Replace with your domain name
+      'http://mkiplearning.com'; //** Replace with your domain name
 
-  static String appName = "MKILearning";
+  static String appName = "MKIPLEARNING";
 
   static String appLogo = 'assets/config/app_logo.png';
 

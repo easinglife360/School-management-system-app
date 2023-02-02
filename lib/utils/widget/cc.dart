@@ -7,7 +7,7 @@ import 'package:infixedu/utils/apis/Apis.dart';
 class CustomController extends GetxController {
   var isLoading = false.obs;
   var errorMsg = "".obs;
-  var connected = false.obs;
+  var connected = true.obs;
 
   Future loadData() async {
     try {

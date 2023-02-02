@@ -34,7 +34,8 @@ class StudentAttendanceRow extends StatefulWidget {
       attendanceStudents, mClass, mSection, date, token);
 }
 
-class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
+class _StudentAttendanceRowState extends State<StudentAttendanceRow>
+    with AutomaticKeepAliveClientMixin {
   final AttendanceController _attendanceController =
       Get.put(AttendanceController());
 
@@ -46,6 +47,7 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
   var function = GlobalDatae();
   Future<bool> isChecked;
   String token;
+  String schoolId;
 
   Future getAttend;
 
@@ -53,7 +55,7 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
       this.mSection, this.date, this.token);
 
   @override
-  void didChangeDependencies() {
+  void initState() {
     _attendanceController.attendanceMap.addAll({
       '${attendanceStudents.recordId}': AttendanceValue.fromJson({
         'student': attendanceStudents.sId.toString(),
@@ -64,20 +66,13 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
             : attendanceStudents.attendanceType,
       })
     });
-    super.didChangeDependencies();
-
-    // isChecked = checkAttendance();
-    // isChecked.then((value){
-    //   if(value){
-    //     setDefaultAttendance();
-    //   }
-    // });
-    // getAttend = getAttendance();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    String image =
+    super.build(context);
+    final String image =
         attendanceStudents.photo == null || attendanceStudents.photo == ''
             ? '${AppConfig.domainName}/public/uploads/staff/demo/staff.jpg'
             : InfixApi.root + attendanceStudents.photo;
@@ -100,7 +95,7 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
                   backgroundColor: Colors.grey,
                 ),
           title: Text(
-            attendanceStudents.name,
+            attendanceStudents.name ?? "",
             style: Theme.of(context).textTheme.headline6,
           ),
           subtitle: Column(
@@ -114,7 +109,9 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
               CustomRadioButton(
                 defaultSelected: attendanceStudents.attendanceType == null
                     ? "P"
-                    : attendanceStudents.attendanceType,
+                    : attendanceStudents.attendanceType == "H"
+                        ? null
+                        : attendanceStudents.attendanceType,
                 elevation: 0,
                 unSelectedColor: Colors.deepPurple.shade100,
                 selectedColor: Colors.deepPurple,
@@ -128,7 +125,7 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
                   "P",
                   "L",
                   "A",
-                  "H",
+                  "F",
                 ],
                 buttonTextStyle: ButtonTextStyle(
                     selectedColor: Colors.white,
@@ -176,20 +173,6 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
     );
   }
 
-  void setAttendance() async {
-    final response = await http.get(
-        Uri.parse(InfixApi.attendanceDataSend('${attendanceStudents.sId}',
-            atten, date, mClass, mSection, attendanceStudents.recordId)),
-        headers: Utils.setHeader(token));
-    print(response.request.url);
-    if (response.statusCode == 200) {
-      debugPrint('Attendance successful');
-      Utils.showToast('Attendance set for ${attendanceStudents.name}');
-    } else {
-      throw Exception('Failed to load');
-    }
-  }
-
 //  void setDefaultAttendance() async {
 //    final response = await http.get(InfixApi.attendance_defalut_send(date, mClass, mSection));
 //    if (response.statusCode == 200) {
@@ -199,8 +182,15 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
 //    }
 //  }
   Future<bool> checkAttendance() async {
+    await Utils.getStringValue('schoolId').then((value) {
+      schoolId = value;
+    });
     final response = await http.get(
-        Uri.parse(InfixApi.attendanceCheck(date, mClass, mSection)),
+        Uri.parse(InfixApi.attendanceCheck(
+          date,
+          mClass,
+          mSection,
+        )),
         headers: Utils.setHeader(token));
     if (response.statusCode == 200) {
       var jsonData = jsonDecode(response.body);
@@ -209,4 +199,7 @@ class _StudentAttendanceRowState extends State<StudentAttendanceRow> {
       throw Exception('Failed to load');
     }
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }

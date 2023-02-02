@@ -58,11 +58,11 @@ class _LeaveListStudentState extends State<LeaveListStudent> {
           myLeaves = getMyLeaves(
               widget.id != null ? int.parse(widget.id) : int.parse(value));
           pendingLeaves = getPendingLeaves(
-              widget.id != null ? int.parse(widget.id) : int.parse(value));
-          approvedLeaves = getApprovedLeaves(
-              widget.id != null ? int.parse(widget.id) : int.parse(value));
-          rejectedLeaves = getRejectedLeaves(
-              widget.id != null ? int.parse(widget.id) : int.parse(value));
+              widget.id != null ? int.parse(widget.id) : int.parse(value), "P");
+          approvedLeaves = getPendingLeaves(
+              widget.id != null ? int.parse(widget.id) : int.parse(value), "A");
+          rejectedLeaves = getPendingLeaves(
+              widget.id != null ? int.parse(widget.id) : int.parse(value), "C");
         });
       });
     });
@@ -674,8 +674,9 @@ class _LeaveListStudentState extends State<LeaveListStudent> {
     }
   }
 
-  Future<LeaveAdminList> getPendingLeaves(var id) async {
-    final response = await http.get(Uri.parse(InfixApi.pendingLeaves(id)),
+  Future<LeaveAdminList> getPendingLeaves(var id, purpose) async {
+    final response = await http.get(
+        Uri.parse(InfixApi.pendingLeaves(id, purpose)),
         headers: Utils.setHeader(_token.toString()));
     if (response.statusCode == 200) {
       var jsonData = jsonDecode(response.body);

@@ -85,7 +85,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
           schoolId = value;
         });
       }).then((value) async {
-        await getProfile(id).then((value) async {
+        await getProfile(widget.id).then((value) async {
           _userController.studentId.value = value.studentData.userDetails.id;
 
           await _userController.getStudentRecord().then((value) {
@@ -141,7 +141,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               shrinkWrap: true,
               children: <Widget>[
                 SizedBox(
-                  height: 20,
+                  height: 10,
                 ),
                 Obx(
                   () {
@@ -154,13 +154,23 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                           setState(
                             () {
                               DateTime date = DateTime.now();
-                              attendances = getAllStudentAttendance(
-                                  widget.id,
-                                  _userController.selectedRecord.value.id,
-                                  date.month,
-                                  date.year,
-                                  token,
-                                  int.parse(schoolId));
+                              if (widget.id != null) {
+                                attendances = getAllStudentAttendance(
+                                    widget.id,
+                                    _userController.selectedRecord.value.id,
+                                    date.month,
+                                    date.year,
+                                    token,
+                                    int.parse(schoolId));
+                              } else {
+                                attendances = getAllStudentAttendance(
+                                    id,
+                                    _userController.selectedRecord.value.id,
+                                    date.month,
+                                    date.year,
+                                    token,
+                                    int.parse(schoolId));
+                              }
                             },
                           );
                         },
@@ -362,13 +372,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                       bottomDesign('Present'.tr, 'P', Colors.green),
                       bottomDesign('Absent'.tr, 'A', Colors.red),
                       bottomDesign('Late'.tr, 'L', Color(0xFFEDD200)),
-                      bottomDesign('Halfday'.tr, 'H', Colors.purpleAccent),
-                      bottomDesign('Holiday'.tr, 'F', Colors.deepPurpleAccent),
+                      bottomDesign('Halfday'.tr, 'F', Colors.purpleAccent),
+                      bottomDesign('Holiday'.tr, 'H', Colors.deepPurpleAccent),
                     ],
                   ),
-                ),
-                SizedBox(
-                  height: 40,
                 ),
               ],
             ),
@@ -417,7 +424,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       isLoading = true;
     });
     final response = await http.get(
-        Uri.parse(InfixApi.getStudentAttendence(id, recordId, month, year)),
+        Uri.parse(
+            InfixApi.getStudentAttendence(widget.id, recordId, month, year)),
         headers: Utils.setHeader(token));
 
     if (response.statusCode == 200) {
@@ -459,11 +467,11 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       case 'L':
         return Color(0xFFEDD200);
         break;
-      case 'H':
+      case 'F':
         return Colors.purpleAccent;
         break;
-      case 'F':
-        return Colors.deepPurple;
+      case 'H':
+        return Colors.deepPurpleAccent;
         break;
       default:
         return Colors.transparent;

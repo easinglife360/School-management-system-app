@@ -1039,11 +1039,7 @@ class _DBStudentProfileState extends State<DBStudentProfile> {
             Utils.showToast(
                 "Download Completed. File is also available in your download folder."
                     .tr);
-            Navigator.push(
-                context,
-                ScaleRoute(
-                    page: DownloadViewer(
-                        title: title, filePath: InfixApi.root + url)));
+
           } else {
             // ignore: deprecated_member_use
             await canLaunch(InfixApi.root + url)

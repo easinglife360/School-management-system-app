@@ -17,7 +17,7 @@ import 'package:infixedu/utils/Utils.dart';
 import 'package:infixedu/utils/apis/Apis.dart';
 import 'package:infixedu/utils/model/Classes.dart';
 import 'package:infixedu/utils/model/Section.dart';
-import 'package:infixedu/utils/widget/ScaleRoute.dart';
+import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'attendance/AttendanceStudentList.dart';
 
 class StudentAttendanceHome extends StatefulWidget {
@@ -235,16 +235,17 @@ class _StudentAttendanceHomeState extends State<StudentAttendanceHome> {
         onTap: () {
           var passedDate =
               _selectedDate == null ? "$year-$month-$day" : _selectedDate;
-          Navigator.push(
-              context,
-              ScaleRoute(
-                  page: StudentListAttendance(
-                classCode: classId,
-                sectionCode: sectionId,
-                url: url,
-                date: passedDate,
-                token: _token,
-              )));
+          pushNewScreen(
+            context,
+            screen: StudentListAttendance(
+              classCode: classId,
+              sectionCode: sectionId,
+              url: url,
+              date: passedDate,
+              token: _token,
+            ),
+            withNavBar: false,
+          );
         },
       ),
     );

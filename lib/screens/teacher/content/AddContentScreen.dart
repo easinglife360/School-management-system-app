@@ -40,7 +40,7 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
   String _selectedaAssignDate;
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
-  Future<ClassList> classes;
+  Future classes;
   Future<SectionList> sections;
   Future<TeacherSubjectList> subjects;
   TeacherSubjectList subjectList;
@@ -54,16 +54,18 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
   bool isResponse = false;
   Response response;
   Dio dio = new Dio();
-  var contentType = [
-    'Assignment'.tr,
-    'Syllabus'.tr,
-    'Other Downloads'.tr
-  ];
+  String rule;
+  var contentType = ['Assignment'.tr, 'Syllabus'.tr, 'Other Downloads'.tr];
   String radioStr = 'admin';
   int allClasses = 0;
 
   String _token;
   String _schoolId;
+
+  bool studentDropdown = false;
+  bool allStudent = false;
+  bool allAdmin = true;
+  bool studentSelect = false;
 
   @override
   void initState() {
@@ -84,6 +86,9 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
         _token = value;
       });
     }).then((value) {
+      Utils.getStringValue('rule').then((ruleValue) {
+        rule = ruleValue;
+      });
       Utils.getStringValue('id').then((value) {
         setState(() {
           _id = value;
@@ -111,6 +116,7 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
       ),
       backgroundColor: Colors.white,
       body: Container(
+        padding: EdgeInsets.symmetric(horizontal: 10),
         child: getContent(context),
       ),
       bottomNavigationBar: Column(
@@ -138,9 +144,7 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
                 String title = titleController.text;
                 String description = descriptionController.text;
 
-                if (title.isNotEmpty &&
-                    description.isNotEmpty &&
-                    _file.path.isNotEmpty) {
+                if (title.isNotEmpty && description.isNotEmpty) {
                   setState(() {
                     isResponse = true;
                   });
@@ -165,47 +169,59 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
     return Column(
       children: <Widget>[
         Expanded(
-          child: FutureBuilder<ClassList>(
+          child: FutureBuilder(
             future: classes,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return ListView(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
                   children: <Widget>[
                     SizedBox(height: 20),
-                    getContentTypeDropdown(),
+                    Text(
+                      'Content Type'.tr,
+                      style: Theme.of(context).textTheme.headline4,
+                    ),
                     SizedBox(height: 5),
-                    Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: TextFormField(
-                        keyboardType: TextInputType.text,
-                        style: Theme.of(context).textTheme.headline4,
-                        controller: titleController,
-                        decoration: InputDecoration(
-                            hintText: "Title".tr,
-                            labelText: "Title".tr,
-                            labelStyle: Theme.of(context).textTheme.headline4,
-                            errorStyle: TextStyle(
-                                color: Colors.pinkAccent,
-                                fontSize: ScreenUtil().setSp(12)),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                            )),
+                    getContentTypeDropdown(),
+                    SizedBox(height: 20),
+                    Text(
+                      'Title'.tr,
+                      style: Theme.of(context).textTheme.headline4,
+                    ),
+                    SizedBox(height: 5),
+                    TextFormField(
+                      keyboardType: TextInputType.text,
+                      style: Theme.of(context).textTheme.headline4,
+                      controller: titleController,
+                      textAlign: TextAlign.start,
+                      decoration: InputDecoration(
+                        labelStyle: Theme.of(context).textTheme.headline4,
+                        errorStyle:
+                            TextStyle(color: Colors.pinkAccent, fontSize: 12),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                          borderSide: BorderSide(
+                            color: Colors.deepPurpleAccent,
+                            width: 0.5,
+                          ),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                          borderSide: BorderSide(
+                              color: Colors.deepPurpleAccent, width: 0.5),
+                        ),
                       ),
                     ),
                     SizedBox(
+                      height: 20,
+                    ),
+                    Text('Available for'.tr,
+                        style: Theme.of(context).textTheme.headline4),
+                    SizedBox(
                       height: 5,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                      child: Text(
-                        'Available for'.tr,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headline4
-                            .copyWith(fontSize: ScreenUtil().setSp(12)),
-                      ),
-                    ),
                     RadioListTile(
+                      contentPadding: EdgeInsets.zero,
                       groupValue: radioStr,
                       title: Text("All Admin".tr,
                           style: Theme.of(context)
@@ -213,94 +229,99 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
                               .headline4
                               .copyWith(fontSize: ScreenUtil().setSp(12))),
                       value: 'admin',
-                      onChanged: (val) {
+                      activeColor: Colors.purple,
+                      selected: radioStr == 'admin' ? true : false,
+                      enableFeedback: false,
+                      dense: true,
+                      onChanged: (_) {
                         setState(() {
-                          radioStr = val;
-                          allClasses = 0;
+                          radioStr = 'admin';
+                        });
+                        setState(() {
+                          studentDropdown = false;
                         });
                       },
-                      activeColor: Colors.purple,
-                      selected: true,
-                      dense: true,
                     ),
                     RadioListTile(
+                      contentPadding: EdgeInsets.zero,
                       groupValue: radioStr,
-                      title: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            radioStr = 'student';
-                          });
-                          showAlertDialog(context);
-                        },
-                        child: Text("Student".tr,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headline4
-                                .copyWith(fontSize: ScreenUtil().setSp(12))),
-                      ),
+                      title: Text("Student".tr,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline4
+                              .copyWith(fontSize: ScreenUtil().setSp(12))),
                       value: 'student',
-                      onChanged: (val) {
+                      activeColor: Colors.purple,
+                      enableFeedback: false,
+                      selected: radioStr == 'student' ? true : false,
+                      dense: true,
+                      onChanged: (_) {
                         setState(() {
-                          radioStr = val;
+                          radioStr = 'student';
+                        });
+                        setState(() {
+                          studentDropdown = true;
                         });
                       },
-                      activeColor: Colors.purple,
-                      dense: true,
                     ),
+                    studentDropdown ? _studentListWidget(context) : SizedBox(),
                     SizedBox(
                       height: 5,
                     ),
-                    InkWell(
-                      onTap: () {
-                        DatePicker.showDatePicker(
-                          context,
-                          pickerTheme: DateTimePickerTheme(
-                            confirm: Text('Done',
-                                style: TextStyle(color: Colors.red)),
-                            cancel: Text('cancel',
-                                style: TextStyle(color: Colors.cyan)),
-                          ),
-                          minDateTime: DateTime.parse(initDateTime),
-                          maxDateTime: DateTime.parse(maxDateTime),
-                          initialDateTime: _dateTime,
-                          dateFormat: _format,
-                          locale: _locale,
-                          onClose: () => print("----- onClose -----"),
-                          onCancel: () => print('onCancel'),
-                          onChange: (dateTime, List<int> index) {
-                            setState(() {
-                              _dateTime = dateTime;
-                            });
-                          },
-                          onConfirm: (dateTime, List<int> index) {
-                            setState(() {
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(
+                          color: Colors.deepPurpleAccent,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          DatePicker.showDatePicker(
+                            context,
+                            pickerTheme: DateTimePickerTheme(
+                              confirm: Text('Done',
+                                  style: TextStyle(color: Colors.red)),
+                              cancel: Text('cancel',
+                                  style: TextStyle(color: Colors.cyan)),
+                            ),
+                            minDateTime: DateTime.parse(initDateTime),
+                            maxDateTime: DateTime.parse(maxDateTime),
+                            initialDateTime: _dateTime,
+                            dateFormat: _format,
+                            locale: _locale,
+                            onClose: () => print("----- onClose -----"),
+                            onCancel: () => print('onCancel'),
+                            onChange: (dateTime, List<int> index) {
                               setState(() {
                                 _dateTime = dateTime;
-                                _selectedaAssignDate =
-                                    '${_dateTime.year}-${getAbsoluteDate(_dateTime.month)}-${getAbsoluteDate(_dateTime.day)}';
                               });
-                            });
-                          },
-                        );
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10.0),
+                            },
+                            onConfirm: (dateTime, List<int> index) {
+                              setState(() {
+                                setState(() {
+                                  _dateTime = dateTime;
+                                  _selectedaAssignDate =
+                                      '${_dateTime.year}-${getAbsoluteDate(_dateTime.month)}-${getAbsoluteDate(_dateTime.day)}';
+                                });
+                              });
+                            },
+                          );
+                        },
                         child: Row(
                           children: <Widget>[
                             Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.only(left: 8.0, top: 8.0),
-                                child: Text(
-                                  _selectedaAssignDate == null
-                                      ? 'Assign Date'.tr
-                                      : _selectedaAssignDate,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headline4
-                                      .copyWith(
-                                          fontSize: ScreenUtil().setSp(12)),
-                                ),
+                              child: Text(
+                                _selectedaAssignDate == null
+                                    ? 'Assign Date'.tr
+                                    : _selectedaAssignDate,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headline4
+                                    .copyWith(fontSize: ScreenUtil().setSp(12)),
                               ),
                             ),
                             Icon(
@@ -312,40 +333,35 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.all(10.0),
-                      child: Container(
-                        height: 1,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
+                    SizedBox(
+                      height: 15,
+                    ),
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(
+                          color: Colors.deepPurpleAccent,
+                          width: 0.5,
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      height: 5,
-                    ),
-                    InkWell(
-                      onTap: () {
-                        pickDocument();
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10.0),
+                      child: InkWell(
+                        onTap: () {
+                          pickDocument();
+                        },
                         child: Row(
                           children: <Widget>[
                             Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Text(
-                                  _file == null
-                                      ? 'Select file'.tr
-                                      : _file.path.split('/').last,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headline4
-                                      .copyWith(
-                                          fontSize: ScreenUtil().setSp(12)),
-                                  maxLines: 2,
-                                ),
+                              child: Text(
+                                _file == null
+                                    ? 'Select file'.tr
+                                    : _file.path.split('/').last,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headline4
+                                    .copyWith(fontSize: ScreenUtil().setSp(12)),
+                                maxLines: 2,
                               ),
                             ),
                             Text('Browse'.tr,
@@ -358,30 +374,31 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.all(10.0),
-                      child: Container(
-                        height: 1,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                        ),
-                      ),
+                    SizedBox(
+                      height: 15,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: TextFormField(
-                        keyboardType: TextInputType.text,
-                        style: Theme.of(context).textTheme.headline4,
-                        controller: descriptionController,
-                        decoration: InputDecoration(
-                            hintText: "Description".tr,
-                            labelText: "Description".tr,
-                            labelStyle: Theme.of(context).textTheme.headline4,
-                            errorStyle: TextStyle(
-                                color: Colors.pinkAccent, fontSize: 15.0),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(5.0),
-                            )),
+                    TextFormField(
+                      keyboardType: TextInputType.text,
+                      style: Theme.of(context).textTheme.headline4,
+                      controller: descriptionController,
+                      decoration: InputDecoration(
+                        hintText: "Description".tr,
+                        labelText: "Description".tr,
+                        labelStyle: Theme.of(context).textTheme.headline4,
+                        errorStyle:
+                            TextStyle(color: Colors.pinkAccent, fontSize: 15.0),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                          borderSide: BorderSide(
+                            color: Colors.deepPurpleAccent,
+                            width: 0.5,
+                          ),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5.0),
+                          borderSide: BorderSide(
+                              color: Colors.deepPurpleAccent, width: 0.5),
+                        ),
                       ),
                     ),
                   ],
@@ -398,30 +415,35 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
 
   Widget getContentTypeDropdown() {
     return Container(
-      width: MediaQuery.of(context).size.width,
-      padding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 10),
-      child: DropdownButton(
-        elevation: 0,
-        isExpanded: true,
-        items: contentType.map((item) {
-          return DropdownMenuItem<String>(
-            value: item,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8.0, bottom: 10),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: Colors.deepPurpleAccent,
+          width: 0.5,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton(
+          elevation: 0,
+          isExpanded: true,
+          items: contentType.map((item) {
+            return DropdownMenuItem<String>(
+              value: item,
               child: Text(
                 item,
                 style: Theme.of(context).textTheme.headline4,
               ),
-            ),
-          );
-        }).toList(),
-        style: Theme.of(context).textTheme.headline4.copyWith(fontSize: 15.0),
-        onChanged: (value) {
-          setState(() {
-            _selectedContentType = value;
-          });
-        },
-        value: _selectedContentType,
+            );
+          }).toList(),
+          style: Theme.of(context).textTheme.headline4.copyWith(fontSize: 15.0),
+          onChanged: (value) {
+            setState(() {
+              _selectedContentType = value;
+            });
+          },
+          value: _selectedContentType,
+        ),
       ),
     );
   }
@@ -438,8 +460,9 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
       "all_classes": '$allClasses',
       "content_title": titleController.text,
       "content_type": _selectedContentType.toLowerCase().substring(0, 2),
-      "attach_file":
-          await MultipartFile.fromFile(_file.path, filename: _file.path),
+      "attach_file": _file != null
+          ? await MultipartFile.fromFile(_file.path, filename: _file.path)
+          : "",
     });
     response = await dio.post(
       InfixApi.uploadContent,
@@ -487,14 +510,17 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
     return code;
   }
 
-  Future<ClassList> getAllClass(dynamic id) async {
-    final response = await http.get(
-        Uri.parse(InfixApi.getClassById(id)),
+  Future getAllClass(dynamic id) async {
+    final response = await http.get(Uri.parse(InfixApi.getClassById(id)),
         headers: Utils.setHeader(_token.toString()));
-
+    print(response.body);
     if (response.statusCode == 200) {
       var jsonData = jsonDecode(response.body);
-      return ClassList.fromJson(jsonData['data']['teacher_classes']);
+      if (rule == "1" || rule == "5") {
+        return AdminClassList.fromJson(jsonData['data']['teacher_classes']);
+      } else {
+        return ClassList.fromJson(jsonData['data']['teacher_classes']);
+      }
     } else {
       throw Exception('Failed to load');
     }
@@ -504,7 +530,7 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
     final response = await http.get(
         Uri.parse(InfixApi.getSectionById(id, classId)),
         headers: Utils.setHeader(_token.toString()));
-
+    print(response.body);
     if (response.statusCode == 200) {
       var jsonData = jsonDecode(response.body);
 
@@ -514,194 +540,199 @@ class _AddContentScreeenState extends State<AddContentScreeen> {
     }
   }
 
-  showAlertDialog(BuildContext context) {
-    showDialog<void>(
-      barrierDismissible: true,
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.all(0),
-                  child: Container(
-                    height: MediaQuery.of(context).size.height / 3,
-                    width: MediaQuery.of(context).size.width,
-                    color: Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 10.0, top: 20.0),
-                      child: Scaffold(
-                        backgroundColor: Colors.white,
-                        body: FutureBuilder<ClassList>(
-                          future: classes,
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              return ListView(
-                                children: <Widget>[
-                                  GestureDetector(
-                                    child: RadioListTile(
-                                      groupValue: allClasses,
-                                      title: Text("All Student".tr,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headline4
-                                              .copyWith(fontSize: 15.0)),
-                                      value: 1,
-                                      onChanged: (val) {
-                                        setState(() {
-                                          allClasses = val;
-                                        });
-                                      },
-                                      activeColor: Colors.purple,
-                                    ),
-                                    onTap: () {
-                                      setState(() {
-                                        if (allClasses == 0) {
-                                          allClasses = 1;
-                                        } else {
-                                          allClasses = 0;
-                                        }
-                                      });
-                                    },
-                                  ),
-                                  Container(
-                                    width: MediaQuery.of(context).size.width,
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 10.0),
-                                    child: DropdownButton(
-                                      elevation: 0,
-                                      isExpanded: true,
-                                      items: snapshot.data.classes.map((item) {
-                                        return DropdownMenuItem<String>(
-                                          value: item.name,
-                                          child: Padding(
-                                            padding: const EdgeInsets.only(
-                                                left: 8.0),
-                                            child: Text(item.name),
-                                          ),
-                                        );
-                                      }).toList(),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headline4
-                                          .copyWith(fontSize: 15.0),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _selectedClass = value;
-                                          classId = getCode(
-                                              snapshot.data.classes, value);
+  _studentListWidget(BuildContext context) {
+    return FutureBuilder(
+      future: classes,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          final List classes = snapshot.data.classes;
+          return ListView(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: allStudent,
+                  activeColor: Colors.purple,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  title: Text("All Student".tr,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline4
+                          .copyWith(fontSize: 15.0)),
+                  onChanged: (bool value) {
+                    setState(() {
+                      allStudent = value;
+                      allStudent ? allClasses = 1 : allClasses = 0;
+                    });
+                  }),
+              Container(
+                width: MediaQuery.of(context).size.width,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Class",
+                      style: Theme.of(context)
+                          .textTheme
+                          .headline4
+                          .copyWith(fontSize: 15.0),
+                    ),
+                    SizedBox(
+                      height: 5,
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 5),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(
+                          color: Colors.deepPurpleAccent,
+                          width: 0.5,
+                        ),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton(
+                          elevation: 0,
+                          isExpanded: true,
+                          items: classes.map((item) {
+                            return DropdownMenuItem(
+                              value: item.name,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Text(item.name),
+                              ),
+                            );
+                          }).toList(),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headline4
+                              .copyWith(fontSize: 15.0),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedClass = value;
+                              classId = getCode(snapshot.data.classes, value);
 
-                                          sections = getAllSection(
-                                              int.parse(_id), classId);
-                                          sections.then((sectionValue) {
-                                            _selectedSection =
-                                                sectionValue.sections[0].name;
-                                            sectionId =
-                                                sectionValue.sections[0].id;
-                                          });
-                                        });
-                                      },
-                                      value: _selectedClass,
-                                    ),
-                                  ),
-                                  FutureBuilder<SectionList>(
-                                    future: sections,
-                                    builder: (context, secSnap) {
-                                      if (secSnap.hasData) {
-                                        return Container(
-                                          width:
-                                              MediaQuery.of(context).size.width,
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 10.0),
-                                          child: DropdownButton(
-                                            elevation: 0,
-                                            isExpanded: true,
-                                            items: secSnap.data.sections
-                                                .map((item) {
-                                              return DropdownMenuItem<String>(
-                                                value: item.name,
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          left: 8.0),
-                                                  child: Text(item.name),
-                                                ),
-                                              );
-                                            }).toList(),
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .headline4
-                                                .copyWith(fontSize: 15.0),
-                                            onChanged: (value) {
-                                              setState(() {
-                                                _selectedSection = value;
-
-                                                sectionId = getCode(
-                                                    secSnap.data.sections,
-                                                    value);
-                                              });
-                                            },
-                                            value: _selectedSection,
-                                          ),
-                                        );
-                                      } else {
-                                        return Center(
-                                            child: Text("loading..."));
-                                      }
-                                    },
-                                  ),
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                  Container(
-                                    margin:
-                                        EdgeInsets.symmetric(horizontal: 40),
-                                    height: 50.0,
-                                    child: GestureDetector(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(10.0),
-                                        alignment: Alignment.center,
-                                        decoration: Utils.gradientBtnDecoration,
-                                        child: Text(
-                                          "Confirm".tr,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headline5
-                                              .copyWith(color: Colors.white),
-                                        ),
-                                      ),
-                                      onTap: () async {
-                                        Navigator.of(context,
-                                                rootNavigator: true)
-                                            .pop('dialog');
-
-                                        if (allClasses == 1) {
-                                          Utils.showToast(
-                                              "All Student selected");
-                                        } else {
-                                          Utils.showToast(
-                                              "Selected Class: $_selectedClass, Section: $_selectedSection");
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              );
-                            } else {
-                              return Center(child: Text("loading..."));
-                            }
+                              sections = getAllSection(int.parse(_id), classId);
+                              sections.then((sectionValue) {
+                                _selectedSection =
+                                    sectionValue.sections[0].name;
+                                sectionId = sectionValue.sections[0].id;
+                              });
+                            });
                           },
+                          value: _selectedClass,
                         ),
                       ),
                     ),
-                  ),
-                )
-              ],
-            );
-          },
-        );
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              FutureBuilder<SectionList>(
+                future: sections,
+                builder: (context, secSnap) {
+                  if (secSnap.hasData) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Section",
+                            style: Theme.of(context)
+                                .textTheme
+                                .headline4
+                                .copyWith(fontSize: 15.0),
+                          ),
+                          SizedBox(
+                            height: 5,
+                          ),
+                          DropdownButtonHideUnderline(
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 5),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(5),
+                                border: Border.all(
+                                  color: Colors.deepPurpleAccent,
+                                  width: 0.5,
+                                ),
+                              ),
+                              child: DropdownButton(
+                                elevation: 0,
+                                isExpanded: true,
+                                items: secSnap.data.sections.map((item) {
+                                  return DropdownMenuItem<String>(
+                                    value: item.name,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child: Text(item.name),
+                                    ),
+                                  );
+                                }).toList(),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headline4
+                                    .copyWith(fontSize: 15.0),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedSection = value;
+
+                                    sectionId =
+                                        getCode(secSnap.data.sections, value);
+                                  });
+                                },
+                                value: _selectedSection,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    return SizedBox.shrink();
+                  }
+                },
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              // Container(
+              //   margin: EdgeInsets.symmetric(horizontal: 40),
+              //   height: 50.0,
+              //   child: GestureDetector(
+              //     child: Container(
+              //       padding: const EdgeInsets.all(10.0),
+              //       alignment: Alignment.center,
+              //       decoration: Utils.gradientBtnDecoration,
+              //       child: Text(
+              //         "Confirm".tr,
+              //         style: Theme.of(context)
+              //             .textTheme
+              //             .headline5
+              //             .copyWith(color: Colors.white),
+              //       ),
+              //     ),
+              //     onTap: () async {
+              //       // Navigator.of(context, rootNavigator: true)
+              //       //     .pop('dialog');
+
+              //       if (allClasses == 1) {
+              //         Utils.showToast("All Student selected");
+              //       } else {
+              //         Utils.showToast(
+              //             "Selected Class: $_selectedClass, Section: $_selectedSection");
+              //       }
+              //     },
+              //   ),
+              // ),
+            ],
+          );
+        } else {
+          return SizedBox.shrink();
+        }
       },
     );
   }
